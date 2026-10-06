@@ -10,7 +10,8 @@
     "migrate": "payload migrate",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap",
-    "migrate:directus": "tsx scripts/migrate-directus.ts"
+    "migrate:directus": "tsx scripts/migrate-directus.ts",
+    "seed": "tsx scripts/seed-content.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.85.1",

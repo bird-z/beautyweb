@@ -71,6 +71,15 @@ export interface Config {
     categories: Category;
     media: Media;
     users: User;
+    departments: Department;
+    'council-members': CouncilMember;
+    studios: Studio;
+    projects: Project;
+    events: Event;
+    members: Member;
+    'wall-entries': WallEntry;
+    notes: Note;
+    'join-applications': JoinApplication;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -83,6 +92,15 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    departments: DepartmentsSelect<false> | DepartmentsSelect<true>;
+    'council-members': CouncilMembersSelect<false> | CouncilMembersSelect<true>;
+    studios: StudiosSelect<false> | StudiosSelect<true>;
+    projects: ProjectsSelect<false> | ProjectsSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
+    members: MembersSelect<false> | MembersSelect<true>;
+    'wall-entries': WallEntriesSelect<false> | WallEntriesSelect<true>;
+    notes: NotesSelect<false> | NotesSelect<true>;
+    'join-applications': JoinApplicationsSelect<false> | JoinApplicationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -93,8 +111,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -271,6 +293,179 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "departments".
+ */
+export interface Department {
+  id: number;
+  name: string;
+  en: string;
+  description: string;
+  sort?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "council-members".
+ */
+export interface CouncilMember {
+  id: number;
+  title: string;
+  name: string;
+  sort?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studios".
+ */
+export interface Studio {
+  id: number;
+  name: string;
+  slug: string;
+  en: string;
+  description: string;
+  tags?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  sort?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects".
+ */
+export interface Project {
+  id: number;
+  title: string;
+  stage: 'incubating' | 'building' | 'released';
+  statusLabel: string;
+  description: string;
+  sort?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  term: string;
+  title: string;
+  statusLabel: string;
+  description: string;
+  date?: string | null;
+  sort?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "members".
+ */
+export interface Member {
+  id: number;
+  name: string;
+  pinyin?: string | null;
+  tag: string;
+  department: number | Department;
+  college: string;
+  year: string;
+  bio: string;
+  quote: string;
+  tags?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  featured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wall-entries".
+ */
+export interface WallEntry {
+  id: number;
+  kind: '活动' | '校园' | '观察';
+  caption: string;
+  dateLabel: string;
+  image?: (number | null) | Media;
+  ratio?: number | null;
+  sort?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notes".
+ */
+export interface Note {
+  id: number;
+  slug: string;
+  category: string;
+  title: string;
+  date: string;
+  lede: string;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "join-applications".
+ */
+export interface JoinApplication {
+  id: number;
+  name: string;
+  contact: string;
+  college: string;
+  major: string;
+  year: string;
+  department: string;
+  interests?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  message: string;
+  status?: ('pending' | 'contacted' | 'accepted' | 'rejected') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -400,6 +595,42 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'departments';
+        value: number | Department;
+      } | null)
+    | ({
+        relationTo: 'council-members';
+        value: number | CouncilMember;
+      } | null)
+    | ({
+        relationTo: 'studios';
+        value: number | Studio;
+      } | null)
+    | ({
+        relationTo: 'projects';
+        value: number | Project;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: number | Event;
+      } | null)
+    | ({
+        relationTo: 'members';
+        value: number | Member;
+      } | null)
+    | ({
+        relationTo: 'wall-entries';
+        value: number | WallEntry;
+      } | null)
+    | ({
+        relationTo: 'notes';
+        value: number | Note;
+      } | null)
+    | ({
+        relationTo: 'join-applications';
+        value: number | JoinApplication;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -545,6 +776,156 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "departments_select".
+ */
+export interface DepartmentsSelect<T extends boolean = true> {
+  name?: T;
+  en?: T;
+  description?: T;
+  sort?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "council-members_select".
+ */
+export interface CouncilMembersSelect<T extends boolean = true> {
+  title?: T;
+  name?: T;
+  sort?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studios_select".
+ */
+export interface StudiosSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  en?: T;
+  description?: T;
+  tags?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  sort?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects_select".
+ */
+export interface ProjectsSelect<T extends boolean = true> {
+  title?: T;
+  stage?: T;
+  statusLabel?: T;
+  description?: T;
+  sort?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  term?: T;
+  title?: T;
+  statusLabel?: T;
+  description?: T;
+  date?: T;
+  sort?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "members_select".
+ */
+export interface MembersSelect<T extends boolean = true> {
+  name?: T;
+  pinyin?: T;
+  tag?: T;
+  department?: T;
+  college?: T;
+  year?: T;
+  bio?: T;
+  quote?: T;
+  tags?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  featured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wall-entries_select".
+ */
+export interface WallEntriesSelect<T extends boolean = true> {
+  kind?: T;
+  caption?: T;
+  dateLabel?: T;
+  image?: T;
+  ratio?: T;
+  sort?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notes_select".
+ */
+export interface NotesSelect<T extends boolean = true> {
+  slug?: T;
+  category?: T;
+  title?: T;
+  date?: T;
+  lede?: T;
+  content?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "join-applications_select".
+ */
+export interface JoinApplicationsSelect<T extends boolean = true> {
+  name?: T;
+  contact?: T;
+  college?: T;
+  major?: T;
+  year?: T;
+  department?: T;
+  interests?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  message?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -613,6 +994,86 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  school: string;
+  name: string;
+  en: string;
+  slogan: string;
+  sloganEn: string;
+  motto: string;
+  address: string;
+  mailCoop: string;
+  mailOffice: string;
+  pillars?:
+    | {
+        name: string;
+        en: string;
+        description: string;
+        id?: string | null;
+      }[]
+    | null;
+  milestones?:
+    | {
+        when: string;
+        title: string;
+        description: string;
+        id?: string | null;
+      }[]
+    | null;
+  recruitmentRules?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  school?: T;
+  name?: T;
+  en?: T;
+  slogan?: T;
+  sloganEn?: T;
+  motto?: T;
+  address?: T;
+  mailCoop?: T;
+  mailOffice?: T;
+  pillars?:
+    | T
+    | {
+        name?: T;
+        en?: T;
+        description?: T;
+        id?: T;
+      };
+  milestones?:
+    | T
+    | {
+        when?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  recruitmentRules?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

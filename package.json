@@ -13,6 +13,7 @@
     "migrate": "npm --prefix server run migrate",
     "generate:types": "npm --prefix server run generate:types",
     "generate:importmap": "npm --prefix server run generate:importmap",
-    "lint:web": "npm --prefix web run lint --if-present"
+    "lint:web": "npm --prefix web run lint --if-present",
+    "seed": "npm --prefix server run seed"
   }
 }

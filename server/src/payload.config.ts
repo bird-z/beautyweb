@@ -7,9 +7,19 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
 import { Articles } from './collections/Articles'
+import { CouncilMembers } from './collections/CouncilMembers'
+import { Departments } from './collections/Departments'
+import { Events } from './collections/Events'
+import { JoinApplications } from './collections/JoinApplications'
+import { Members } from './collections/Members'
+import { Notes } from './collections/Notes'
+import { Projects } from './collections/Projects'
+import { Studios } from './collections/Studios'
+import { WallEntries } from './collections/WallEntries'
 import { Categories } from './collections/Categories'
 import { Media } from './collections/Media'
 import { Users } from './collections/Users'
+import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -24,7 +34,22 @@ export default buildConfig({
       titleSuffix: ' · 生物启扉协会内容管理',
     },
   },
-  collections: [Articles, Categories, Media, Users],
+  collections: [
+    Articles,
+    Categories,
+    Media,
+    Users,
+    Departments,
+    CouncilMembers,
+    Studios,
+    Projects,
+    Events,
+    Members,
+    WallEntries,
+    Notes,
+    JoinApplications,
+  ],
+  globals: [SiteSettings],
   cors: [
     'https://bioqif.com',
     'https://www.bioqif.com',
