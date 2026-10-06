@@ -1,2 +1,22 @@
+# Dependencies
 node_modules
-dist
+
+# Build output
+**/dist
+**/.next
+
+# Local environment files
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Payload runtime data
+server/media
+server/backups
+
+# Logs and local tooling
+*.log
+.DS_Store

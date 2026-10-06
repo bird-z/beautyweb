@@ -1,0 +1,48 @@
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: bioqif-payload-database
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bioqif_payload
+      POSTGRES_USER: bioqif_payload
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /var/lib/bioqif-payload/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bioqif_payload -d bioqif_payload"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  payload:
+    build: .
+    container_name: bioqif-payload
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      NEXT_PUBLIC_SERVER_URL: https://manage.bioqif.com
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - /var/lib/bioqif-payload/media:/app/media
+    depends_on:
+      database:
+        condition: service_healthy
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    profiles: ["migration"]
+    environment:
+      DATABASE_URL: postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      NEXT_PUBLIC_SERVER_URL: https://manage.bioqif.com
+      DIRECTUS_URL: https://cms.bioqif.com
+    volumes:
+      - /var/lib/bioqif-payload/media:/app/media
+    depends_on:
+      database:
+        condition: service_healthy
