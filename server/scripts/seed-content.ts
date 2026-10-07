@@ -6,7 +6,7 @@ import { NOTES } from '../../web/src/data/notes.js'
 import { ROSTER, WALL } from '../../web/src/data/people.js'
 import { MILESTONES, ORG, PILLARS } from '../../web/src/data/site.js'
 
-const published = { _status: 'published' }
+const published = { _status: 'published' as const }
 
 type CollectionName = string
 
@@ -28,10 +28,12 @@ async function upsert(
   const existing = result.docs[0]
 
   if (existing) {
+    // update 不携带 _status,避免把管理员改过的发布状态回写
+    const { _status, ...rest } = data
     return payload.update({
       collection,
       id: existing.id,
-      data,
+      data: rest,
       depth: 0,
       overrideAccess: true,
     })
@@ -100,7 +102,7 @@ function simpleLexical(blocks: unknown[][]) {
 async function seed() {
   const payload = await getPayload({ config })
 
-  const departmentIds = new Map<string, string>()
+  const departmentIds = new Map<string, number>()
   for (const [sort, department] of DEPARTMENTS.entries()) {
     const item = await upsert(payload, 'departments', { name: { equals: department.name } }, {
       ...published,
@@ -109,7 +111,7 @@ async function seed() {
       description: department.text,
       sort,
     })
-    departmentIds.set(department.name, String(item.id))
+    departmentIds.set(department.name, item.id as number)
   }
 
   for (const [sort, member] of COUNCIL.entries()) {
@@ -163,8 +165,14 @@ async function seed() {
   }
 
   for (const member of ROSTER.filter((item) => !(item as { demo?: boolean }).demo)) {
-    await upsert(payload, 'members', { name: { equals: member.name } }, {
-      ...published,
+    const existing = await payload.find({
+      collection: 'members',
+      depth: 0,
+      limit: 1,
+      overrideAccess: true,
+      where: { name: { equals: member.name } },
+    })
+    const base = {
       name: member.name,
       pinyin: member.pinyin,
       tag: member.tag,
@@ -174,15 +182,33 @@ async function seed() {
       bio: member.bio,
       quote: member.quote,
       tags: tags([member.tag]),
-      featured: true,
-    })
+    }
+    if (existing.docs[0]) {
+      // update 不改 featured/_status,避免覆盖管理员调整
+      await payload.update({
+        collection: 'members',
+        id: existing.docs[0].id,
+        data: base as any,
+        depth: 0,
+        overrideAccess: true,
+      })
+    } else {
+      await payload.create({
+        collection: 'members',
+        data: { _status: 'published' as const, ...base, featured: true } as any,
+        depth: 0,
+        overrideAccess: true,
+      })
+    }
   }
 
   for (const [sort, entry] of WALL.entries()) {
+    // 占位条目(索引 >= 7,文案"待补充")保持 draft,不进公开 API
+    const status = (sort >= 7 ? { _status: 'draft' } : { _status: 'published' }) as { _status: 'draft' | 'published' }
     await upsert(payload, 'wall-entries', {
       and: [{ caption: { equals: entry.caption } }, { sort: { equals: sort } }],
     }, {
-      ...published,
+      ...status,
       kind: entry.kind,
       caption: entry.caption,
       dateLabel: entry.date,
