@@ -47,11 +47,12 @@ cmd_init() {
   wait_db
 
   log "2. 初始化 schema(tsx push 全量建表)"
-  # 构建镜像含 node_modules + 源码;直接在里面跑 init-schema
   $COMPOSE build payload
+  $COMPOSE --profile migration build migrate   # init-schema 跑在 migrator 镜像里
   NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
-  IMG="$(sudo docker images -q bioqif-payload-payload:latest | head -1)"
-  [ -n "$IMG" ] || die "payload 镜像不存在——compose build 失败了?"
+  # init-schema 用 migrator(builder)镜像:完整 node_modules + scripts/,runner 里没有 tsx
+  IMG="$(sudo docker images -q bioqif-payload-migrate:latest | head -1)"
+  [ -n "$IMG" ] || die "bioqif-payload-migrate 镜像不存在——先让 compose build migrate/profile"
   docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
@@ -83,11 +84,7 @@ cmd_update() {
   $COMPOSE build payload
   $COMPOSE up -d payload
   log "迁移(有新迁移才需要)"
-  $COMPOSE run --rm --no-deps \
-    -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
-    -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
-    -e PAYLOAD_DB_PUSH=0 \
-    payload npx payload migrate || warn "migrate 失败或没有新迁移"
+  cmd_migrate || warn "migrate 失败或没有新迁移"
   cmd_web
   cmd_status
 }
@@ -95,9 +92,9 @@ cmd_update() {
 cmd_seed() {
   log "内容 seed(幂等 upsert)"
   NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
-  IMG="$(sudo docker inspect bioqif-payload --format '{{.Image}}' 2>/dev/null || true)"
-  [ -n "$IMG" ] || IMG="$(sudo docker images -q bioqif-payload-payload:latest | head -1)"
-  [ -n "$IMG" ] || die "找不到 payload 镜像——先跑 ./deploy.sh init"
+  # seed/migrate 需要完整 node_modules+scripts —— 用 migrator(builder)镜像,不是 runner
+  IMG="$(sudo docker images -q bioqif-payload-migrate:latest | head -1)"
+  [ -n "$IMG" ] || die "bioqif-payload-migrate 镜像不存在——先跑 ./deploy.sh init"
   docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
@@ -108,11 +105,14 @@ cmd_seed() {
 }
 
 cmd_migrate() {
-  $COMPOSE run --rm --no-deps \
+  NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
+  IMG="$(sudo docker images -q bioqif-payload-migrate:latest | head -1)"
+  [ -n "$IMG" ] || die "bioqif-payload-migrate 镜像不存在"
+  docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
     -e PAYLOAD_DB_PUSH=0 \
-    payload npx payload migrate
+    "$IMG" npx payload migrate
 }
 
 cmd_web() {
