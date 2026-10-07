@@ -60,7 +60,7 @@ cmd_init() {
     -e PAYLOAD_DB_PUSH=1 \
     -v "$REPO_DIR/deploy/init-schema.sh:/init-schema.sh:ro" \
     "$IMG" \
-    bash /init-schema.sh || warn "push 步骤失败?看上面日志;若表已存在属正常"
+    sh /init-schema.sh || warn "push 步骤失败?看上面日志;若表已存在属正常"
 
   log "3. 标记历史增量迁移为已执行(幂等)"
   for m in "${MIGRATIONS[@]}"; do
