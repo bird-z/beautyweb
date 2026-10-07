@@ -49,7 +49,8 @@ cmd_init() {
   log "2. 初始化 schema(tsx push 全量建表)"
   # 构建镜像含 node_modules + 源码;直接在里面跑 init-schema
   $COMPOSE build payload
-  docker run --rm --network "$(basename "$REPO_DIR")_default" \
+  NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
+  docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
     -e NEXT_PUBLIC_SERVER_URL="https://manage.bioqif.com" \
@@ -91,7 +92,8 @@ cmd_update() {
 
 cmd_seed() {
   log "内容 seed(幂等 upsert)"
-  docker run --rm --network "$(basename "$REPO_DIR")_default" \
+  NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
+  docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
     -e NEXT_PUBLIC_SERVER_URL="https://manage.bioqif.com" \
