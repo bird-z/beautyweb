@@ -20,3 +20,4 @@ server/backups
 # Logs and local tooling
 *.log
 .DS_Store
+server/tsconfig.tsbuildinfo
