@@ -21,3 +21,7 @@ server/backups
 *.log
 .DS_Store
 server/tsconfig.tsbuildinfo
+
+# npm 是唯一包管理器;pnpm 偶尔自动生成这些文件
+**/pnpm-lock.yaml
+**/pnpm-workspace.yaml
