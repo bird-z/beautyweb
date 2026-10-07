@@ -1,10 +1,12 @@
+import './load-env'
+
 import config from '../src/payload.config'
 import { getPayload } from 'payload'
 
-import { DEPARTMENTS, COUNCIL, EVENTS, PROJECTS, STUDIOS } from '../../web/src/data/content.js'
-import { NOTES } from '../../web/src/data/notes.js'
-import { ROSTER, WALL } from '../../web/src/data/people.js'
-import { MILESTONES, ORG, PILLARS } from '../../web/src/data/site.js'
+import { DEPARTMENTS, COUNCIL, EVENTS, PROJECTS, STUDIOS } from './seed-data/content.js'
+import { NOTES } from './seed-data/notes.js'
+import { ROSTER, WALL } from './seed-data/people.js'
+import { MILESTONES, ORG, PILLARS } from './seed-data/site.js'
 
 const published = { _status: 'published' as const }
 
@@ -116,7 +118,7 @@ async function seed() {
 
   for (const [sort, member] of COUNCIL.entries()) {
     await upsert(payload, 'council-members', {
-      and: [{ title: { equals: member.title } }, { name: { equals: member.name } }],
+      and: [{ title: { equals: member.title } }, { sort: { equals: sort } }],
     }, {
       ...published,
       title: member.title,

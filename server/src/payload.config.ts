@@ -76,6 +76,8 @@ export default buildConfig({
     'http://127.0.0.1:5173',
   ],
   db: postgresAdapter({
+    // 脚本/CI 可通过 PAYLOAD_DB_PUSH=0 关闭自动 schema push(dev server 默认开)
+    push: process.env.PAYLOAD_DB_PUSH !== '0',
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },

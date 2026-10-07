@@ -1,0 +1,68 @@
+# 本地开发用:一条命令起 Postgres + Payload
+#   docker compose -f compose.dev.yaml up -d database   # 只起数据库(宿主跑 pnpm dev 时用)
+#   docker compose -f compose.dev.yaml up -d            # 数据库 + Payload 容器
+#   docker compose -f compose.dev.yaml --profile seed run --rm seed
+#   docker compose -f compose.dev.yaml --profile migration run --rm migrate
+# 与 compose.production.yaml 区别:卷用命名卷、端口暴露 5433、SERVER_URL 用 localhost
+services:
+  database:
+    image: postgres:18-alpine
+    container_name: bioqif-dev-database
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bioqif_payload
+      POSTGRES_USER: bioqif_payload
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - bioqif-dev-postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bioqif_payload -d bioqif_payload"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  payload:
+    build: .
+    container_name: bioqif-dev-payload
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://bioqif_payload:${POSTGRES_PASSWORD:-devpassword}@database:5432/bioqif_payload
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:-dev-secret-change-me-in-.env}
+      NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - bioqif-dev-media:/app/media
+    depends_on:
+      database:
+        condition: service_healthy
+
+  migrate:
+    build: .
+    profiles: ["migration"]
+    environment:
+      DATABASE_URL: postgresql://bioqif_payload:${POSTGRES_PASSWORD:-devpassword}@database:5432/bioqif_payload
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:-dev-secret-change-me-in-.env}
+      NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+    command: ["npx", "payload", "migrate"]
+    depends_on:
+      database:
+        condition: service_healthy
+
+  seed:
+    build: .
+    profiles: ["seed"]
+    environment:
+      DATABASE_URL: postgresql://bioqif_payload:${POSTGRES_PASSWORD:-devpassword}@database:5432/bioqif_payload
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:-dev-secret-change-me-in-.env}
+      NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+    command: ["npm", "run", "seed"]
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  bioqif-dev-postgres:
+  bioqif-dev-media:
