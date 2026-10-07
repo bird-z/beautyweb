@@ -1,0 +1,91 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install web
+        run: npm --prefix web ci
+      - name: Install server
+        run: npm --prefix server ci
+      - name: Build web
+        run: npm run build:web
+      - name: Build server
+        run: npm run build:server
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          # payload.config.ts 需要这俩 env 才能构建;给一个占位即可
+          DATABASE_URL: 'postgresql://localhost:5432/placeholder'
+          PAYLOAD_SECRET: 'ci-placeholder-secret'
+
+  unit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: bioqif_payload_test
+          POSTGRES_USER: bioqif_payload
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U bioqif_payload -d bioqif_payload_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://bioqif_payload:test@localhost:5432/bioqif_payload_test
+      PAYLOAD_SECRET: ci-unit-secret
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm --prefix server ci
+      - run: npm --prefix server run migrate
+      - run: npm --prefix server run seed
+      - run: npm --prefix server run test
+
+  contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: bioqif_payload_test
+          POSTGRES_USER: bioqif_payload
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U bioqif_payload -d bioqif_payload_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://bioqif_payload:test@localhost:5432/bioqif_payload_test
+      PAYLOAD_SECRET: ci-contract-secret
+      NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+      API_BASE: http://localhost:3000
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm --prefix server ci
+      - run: npm --prefix server run migrate
+      - run: npm --prefix server run seed
+      - name: Build server
+        run: npm --prefix server run build
+      - name: Start server
+        run: |
+          npm --prefix server run start &
+          npx wait-on http://localhost:3000/api/health --timeout 60000
+      - name: Contract tests
+        run: npm --prefix server run test:contract
