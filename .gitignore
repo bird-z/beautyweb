@@ -12,6 +12,8 @@ node_modules
 **/.env
 **/.env.*
 !**/.env.example
+# web/.env.production 只含公开 API 地址,允许提交
+!web/.env.production
 
 # Payload runtime data
 server/media
