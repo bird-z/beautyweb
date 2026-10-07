@@ -51,8 +51,8 @@ cmd_init() {
   $COMPOSE --profile migration build migrate   # init-schema 跑在 migrator 镜像里
   NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
   # init-schema 用 migrator(builder)镜像:完整 node_modules + scripts/,runner 里没有 tsx
-  IMG="$(sudo docker images -q bioqif-payload-migrate:latest | head -1)"
-  [ -n "$IMG" ] || die "bioqif-payload-migrate 镜像不存在——先让 compose build migrate/profile"
+  IMG="$(sudo docker images --format '{{.Repository}}' | grep 'migrate$' | head -1)"
+  [ -n "$IMG" ] || die "migrate 镜像不存在——先让 compose --profile migration build migrate"
   docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
@@ -93,8 +93,8 @@ cmd_seed() {
   log "内容 seed(幂等 upsert)"
   NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
   # seed/migrate 需要完整 node_modules+scripts —— 用 migrator(builder)镜像,不是 runner
-  IMG="$(sudo docker images -q bioqif-payload-migrate:latest | head -1)"
-  [ -n "$IMG" ] || die "bioqif-payload-migrate 镜像不存在——先跑 ./deploy.sh init"
+  IMG="$(sudo docker images --format '{{.Repository}}' | grep 'migrate$' | head -1)"
+  [ -n "$IMG" ] || die "migrate 镜像不存在——先跑 ./deploy.sh init"
   docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
@@ -106,8 +106,8 @@ cmd_seed() {
 
 cmd_migrate() {
   NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
-  IMG="$(sudo docker images -q bioqif-payload-migrate:latest | head -1)"
-  [ -n "$IMG" ] || die "bioqif-payload-migrate 镜像不存在"
+  IMG="$(sudo docker images --format '{{.Repository}}' | grep 'migrate$' | head -1)"
+  [ -n "$IMG" ] || die "migrate 镜像不存在"
   docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
