@@ -20,7 +20,6 @@ export default defineConfig({
     // 串行跑,避免 seed 与 access 测试抢 DB
     pool: 'forks',
     maxWorkers: 1,
-    minWorkers: 1,
     fileParallelism: false,
   },
 })
