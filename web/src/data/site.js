@@ -29,16 +29,6 @@ export function sectionOf(pathname) {
   return SECTIONS.find((d) => pathname === d.to || pathname.startsWith(d.to + '/'));
 }
 
-// 四个方向：名称为真实文案，说明为占位
-export const PILLARS = [
-  { name: '学术交流', en: 'Academic', text: '读文献、听讲座、做分享，让专业知识在交流中流动。' },
-  { name: '科创实践', en: 'Innovation', text: '从一个点子出发，组队、动手，把想法做成作品。' },
-  { name: '自然探索', en: 'Nature', text: '走进校园与田野，认识身边的每一种生命。' },
-  { name: '公益科普', en: 'Outreach', text: '把有趣的科学带出校园，讲给更多人听。' },
-];
-
-export const MILESTONES = [
-  { when: '2025 秋', title: '协会扬帆', text: '召开第一次全体（扩大）会议：章程发布、部门亮相、新成员破冰。' },
-  { when: '2025 秋', title: '第一届「黑客松」AI 创作大赛', text: '第六届科技文化节 · TRAE on Campus @ 江西农业大学，48 小时极限创作。' },
-  { when: '2026 春', title: '走向自然与课堂', text: '校园自然观察日、科普进课堂等活动筹备中。' },
-];
+// pillars/milestones/recruitmentRules 已迁移至 SiteSettings global(/api/public/site)
+export const PILLARS = [];
+export const MILESTONES = [];

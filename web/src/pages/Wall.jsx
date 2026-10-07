@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Chips, Cover, CTA, PageHead, Reveal } from '../components/Bits.jsx';
-import { WALL } from '../data/people.js';
-
-const KINDS = [...new Set(WALL.map((w) => w.kind))];
+import { Async } from '../components/Async.jsx';
+import { useResource } from '../services/hooks.js';
+import { listWall } from '../services/endpoints.js';
 
 export default function Wall() {
+  const wall = useResource(listWall, [], { cacheKey: 'wall' });
   const [kind, setKind] = useState('');
   const [active, setActive] = useState(null);
   const dlg = useRef(null);
   const opener = useRef(null);
-  const list = WALL.map((w, i) => ({ ...w, i })).filter((w) => !kind || w.kind === kind);
+  const all = wall.status === 'ready' ? wall.data : [];
+  const list = all.map((w, i) => ({ ...w, i })).filter((w) => !kind || w.kind === kind);
 
   const openAt = (i) => {
     opener.current = document.activeElement;
@@ -27,33 +29,39 @@ export default function Wall() {
     }
   }, [active]);
 
-  const cur = active !== null ? WALL[active] : null;
+  const cur = active !== null ? all[active] : null;
   return (
     <>
       <PageHead lede="校园观察记录与活动影像墙。" />
-      <section className="section">
-        <div className="wrap">
-          <div className="toolbar">
-            <Chips items={KINDS} value={kind} onChange={setKind} label="按类型筛选" />
-            <span className="mono toolbar__count">{String(list.length).padStart(2, '0')} 帧</span>
+      <Async state={wall} render={(data) => (
+        <section className="section">
+          <div className="wrap">
+            <div className="toolbar">
+              <Chips items={[...new Set(data.map((w) => w.kind))]} value={kind} onChange={setKind} label="按类型筛选" />
+              <span className="mono toolbar__count">{String(list.length).padStart(2, '0')} 帧</span>
+            </div>
+            <ul className="wall">
+              {list.map((w, n) => (
+                <Reveal as="li" key={w.id} delay={(n % 3) * 80} className="wall__item">
+                  <button type="button" className="wall__btn glass glow" onClick={() => openAt(w.i)}>
+                    {w.image?.url
+                      ? <img className="cover" style={{ aspectRatio: `${1 / w.ratio}` }} src={w.image.url} alt={w.image.alt || w.caption} loading="lazy" />
+                      : <Cover seed={`wall-${w.i}`} ratio={w.ratio} label="照片待补充" />}
+                    <span className="wall__cap"><span className="mono">{w.kind} · {w.dateLabel}</span><span>{w.caption}</span></span>
+                  </button>
+                </Reveal>
+              ))}
+            </ul>
           </div>
-          <ul className="wall">
-            {list.map((w, n) => (
-              <Reveal as="li" key={w.i} delay={(n % 3) * 80} className="wall__item">
-                <button type="button" className="wall__btn glass glow" onClick={() => openAt(w.i)}>
-                  <Cover seed={`wall-${w.i}`} ratio={w.ratio} label="照片待补充" />
-                  <span className="wall__cap"><span className="mono">{w.kind} · {w.date}</span><span>{w.caption}</span></span>
-                </button>
-              </Reveal>
-            ))}
-          </ul>
-        </div>
-      </section>
+        </section>
+      )} />
       <dialog ref={dlg} className="lightbox" onClose={() => setActive(null)} onClick={(e) => e.target === dlg.current && setActive(null)}>
         {cur && (
           <figure className="lightbox__fig glass">
-            <Cover seed={`wall-${active}`} ratio={cur.ratio} label="照片待补充" />
-            <figcaption><span className="mono">{cur.kind} · {cur.date}</span><span>{cur.caption}</span></figcaption>
+            {cur.image?.url
+              ? <img className="cover" style={{ aspectRatio: `${1 / cur.ratio}` }} src={cur.image.url} alt={cur.image.alt || cur.caption} />
+              : <Cover seed={`wall-${active}`} ratio={cur.ratio} label="照片待补充" />}
+            <figcaption><span className="mono">{cur.kind} · {cur.dateLabel}</span><span>{cur.caption}</span></figcaption>
             <button type="button" className="lightbox__x" onClick={() => setActive(null)} aria-label="关闭" autoFocus>✕</button>
           </figure>
         )}
