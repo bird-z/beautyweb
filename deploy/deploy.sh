@@ -50,13 +50,15 @@ cmd_init() {
   # 构建镜像含 node_modules + 源码;直接在里面跑 init-schema
   $COMPOSE build payload
   NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
+  IMG="$(sudo docker images -q bioqif-payload-payload:latest | head -1)"
+  [ -n "$IMG" ] || die "payload 镜像不存在——compose build 失败了?"
   docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
     -e NEXT_PUBLIC_SERVER_URL="https://manage.bioqif.com" \
     -e PAYLOAD_DB_PUSH=1 \
     -v "$REPO_DIR/deploy/init-schema.sh:/init-schema.sh:ro" \
-    "$(docker compose -f "$REPO_DIR/server/compose.production.yaml" images -q payload)" \
+    "$IMG" \
     bash /init-schema.sh || warn "push 步骤失败?看上面日志;若表已存在属正常"
 
   log "3. 标记历史增量迁移为已执行(幂等)"
@@ -93,12 +95,15 @@ cmd_update() {
 cmd_seed() {
   log "内容 seed(幂等 upsert)"
   NET="$(sudo docker inspect bioqif-payload-database --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)"
+  IMG="$(sudo docker inspect bioqif-payload --format '{{.Image}}' 2>/dev/null || true)"
+  [ -n "$IMG" ] || IMG="$(sudo docker images -q bioqif-payload-payload:latest | head -1)"
+  [ -n "$IMG" ] || die "找不到 payload 镜像——先跑 ./deploy.sh init"
   docker run --rm --network "$NET" \
     -e DATABASE_URL="postgresql://bioqif_payload:${POSTGRES_PASSWORD}@database:5432/bioqif_payload" \
     -e PAYLOAD_SECRET="${PAYLOAD_SECRET}" \
     -e NEXT_PUBLIC_SERVER_URL="https://manage.bioqif.com" \
     -e PAYLOAD_DB_PUSH=0 \
-    "$(docker compose -f "$REPO_DIR/server/compose.production.yaml" images -q payload)" \
+    "$IMG" \
     npx tsx scripts/seed-content.ts
 }
 
