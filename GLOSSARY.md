@@ -17,3 +17,12 @@
 
 ## 协会管理员
 未来负责内容管理人员、会员档案、加入申请和系统权限的人员。
+
+## 会员文章
+`category=会员` 的 Payload 文章，当前承担"会员档案"的角色（后端暂无独立的 members collection）。字段挪用约定：
+- `author`（作者）→ 会员**部门**
+- `source`（来源）→ 会员**学院·年级**
+- `editor`（编辑）→ 会员**兴趣方向**
+- `title`/`summary`/`content`/`cover` 按原意使用（姓名/简介/寄语/照片）
+
+将来后端建真正的 members collection 时，迁移点在 `src/services/articles.js` 的 `MEMBER_FIELDS` 常量。
