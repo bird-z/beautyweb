@@ -1,6 +1,11 @@
 // 旧后端（manage.bioqif.com → Payload）最小 HTTP 客户端
 // 只封装 GET，带超时与错误归一化；POST/PUT 等管理动作不经过这里
-const API_BASE = (import.meta.env.VITE_API_BASE || 'https://manage.bioqif.com').replace(/\/$/, '');
+//
+// 路由策略：
+//   dev  → 相对路径 /api/*，由 vite.config.js 的 server.proxy 转到 manage.bioqif.com（绕 CORS）
+//   prod → 相对路径 /api/*，由 bioqif.com 的 nginx location /api/ 反代到后端（同源）
+//   若想显式指定完整后端地址（绕开 proxy），设 VITE_API_BASE=https://manage.bioqif.com
+const API_BASE = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '');
 const DEFAULT_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT_MS) || 8000;
 
 export class HttpError extends Error {
@@ -19,7 +24,7 @@ export class HttpError extends Error {
  * @returns {Promise<any>} 解析后的 JSON
  */
 export async function getJSON(path, { params, timeout = DEFAULT_TIMEOUT, signal } = {}) {
-  const url = new URL(path, API_BASE);
+  const url = new URL(path, API_BASE || window.location.origin);
   if (params) {
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v));
@@ -40,7 +45,6 @@ export async function getJSON(path, { params, timeout = DEFAULT_TIMEOUT, signal 
       signal: ctrl.signal,
     });
     if (!res.ok) {
-      const body = await res.text().catch(() => '');
       throw new HttpError(`GET ${url.pathname} → ${res.status}`, {
         status: res.status,
         url: url.toString(),

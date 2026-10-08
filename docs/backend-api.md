@@ -216,12 +216,21 @@ curl 'https://manage.bioqif.com/api/media?limit=20'
 | 未知路由 | `404` | `{"message": "Route not found \"/api/xxx\""}` |
 | nginx 挂了 / 容器停了 | `502` | nginx 错误页（非 JSON） |
 
-## CORS
+## CORS 与同源策略
+
+**推荐做法：前端始终用相对路径 `/api/*`，让 dev proxy / 生产 nginx 来管转发**，这样前端代码零 CORS 感知。
+
+- dev（`npm run dev`）：vite `server.proxy` 把 `/api/*` 转到 `https://manage.bioqif.com`
+- 生产（部署到 `bioqif.com`）：nginx `location /api/` 反代到 `http://127.0.0.1:3000`（与静态文件同域同端口）
+
+只有在**明确要绕开 proxy**（比如本地直接 curl 测线上）时，才设 `VITE_API_BASE=https://manage.bioqif.com`。
+
+后端自身的 CORS 白名单（仅在你显式跨域调用时才相关）：
 
 - `Access-Control-Allow-Origin` 是**白名单精确匹配**，不在名单内的 origin 会收到兜底值 `https://www.bioqif.com`（不是 `*`、不是反射）
-- 允许的 header：`Content-Type`
-- 允许的方法：`GET, OPTIONS`（公开端点）
-- 本地 dev server（`localhost:5173`）**不在白名单**——vite dev 时跨域会被浏览器拦，建议配 vite proxy 或用 `--host 127.0.0.1:8000` 起在 8000 段
+- 允许的 header：`Content-Type`；允许的方法：`GET, OPTIONS`（公开端点）
+- 白名单：`bioqif.com`、`www.bioqif.com`、`localhost:8000-8002`、`127.0.0.1:8000-8002`
+- `localhost:5173`（vite dev 默认端口）**不在白名单**——这就是为什么 dev 要用 proxy 而不是直连
 
 ## 运维自查
 
